@@ -19,9 +19,10 @@ const opts = {
 // create express app on port 3000
 const app = express();
 app.use(morgan('dev'));
-const port = 3000;
+const port = process.env.PORT;
+const host = process.env.NODE_ENV === 'production' ? process.env.REDIS_ALIAS : '127.0.0.1';
 
-var client = redis.createClient();
+var client = redis.createClient({host});
 bluebird.promisifyAll(redis);
 
 app.get("/api/getdeparturesbystop", async (req, res) => {

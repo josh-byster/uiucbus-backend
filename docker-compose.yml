@@ -1,0 +1,21 @@
+# docker-compose.yml
+redis:
+  image: redis
+  container_name: redis-store
+  expose:
+    - 6379
+
+app:
+  build: ./
+  volumes:
+    - ./:/var/www/app
+  ports:
+    - 3000:3000
+  links:
+    - redis
+  environment:
+    - NODE_ENV=production
+    - PORT=3000
+    - REDIS_ALIAS=redis-store
+  command:
+    sh -c 'npm i && node server.js'
