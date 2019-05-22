@@ -14,5 +14,8 @@
     "express": "^4.17.0",
     "node-fetch": "^2.6.0",
     "redis": "^2.8.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0"
   }
 }
