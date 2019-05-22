@@ -3,8 +3,9 @@ const fetch = require("node-fetch");
 const https = require("https");
 const redis = require("redis");
 const bluebird = require("bluebird");
+const morgan = require('morgan')
 
-const API_URL = "https://developer.mtd.org/api/v2.2/json/";
+const API_URI = "https://developer.mtd.org/api/v2.2/json";
 const CUMTD_API_KEY = process.env.CUMTD_API_KEY;
 const MAX_EXPECTED_MINS_AWAY = 60;
 
@@ -17,6 +18,7 @@ const opts = {
 
 // create express app on port 3000
 const app = express();
+app.use(morgan('dev'));
 const port = 3000;
 
 var client = redis.createClient();
@@ -24,8 +26,8 @@ bluebird.promisifyAll(redis);
 
 app.get("/api/getdeparturesbystop", async (req, res) => {
   const { stop_id } = req.query;
-  if(!stop_id){
-      return res.send('invalid');
+  if (!stop_id) {
+    return res.send("invalid");
   }
   let stringifiedCurrentEntry = await client.getAsync(stop_id);
   let resp;
@@ -50,18 +52,28 @@ app.get("/api/getdeparturesbystop", async (req, res) => {
 });
 
 app.get("/api/*", async (req, res) => {
-    console.log("Hey!");
+  // set the base url
+  let apiReqUrl = `${API_URI}/${req.params[0]}?key=${CUMTD_API_KEY}`;
+  for (var key in req.query) {
+    // if some reason the key is a query param, ignore it
+    if (key != "key") {
+      // iterate over all keys, adding each to the URL
+      apiReqUrl += `&${key}=${req.query[key]}`;
+    }
+  }
+  const json = await fetch(apiReqUrl, opts).then(res => res.json());
+  res.send(json);
 });
+
 const updateCache = async stop_id => {
+  // get latest info
   let json = await fetch(
-    `${API_URL}/getdeparturesbystop?key=${CUMTD_API_KEY}&stop_id=${stop_id}&pt=${MAX_EXPECTED_MINS_AWAY}`,
+    `${API_URI}/getdeparturesbystop?key=${CUMTD_API_KEY}&stop_id=${stop_id}&pt=${MAX_EXPECTED_MINS_AWAY}`,
     opts
   ).then(res => res.json());
 
   await client.setAsync(stop_id, JSON.stringify(json));
   return json;
 };
-
-
 
 app.listen(port, () => console.log(`Express app listening on port ${port}!`));
