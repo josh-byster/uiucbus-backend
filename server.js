@@ -3,12 +3,12 @@ const fetch = require("node-fetch");
 const https = require("https");
 const redis = require("redis");
 const bluebird = require("bluebird");
-const morgan = require('morgan')
+const morgan = require("morgan");
+const helmet = require("helmet");
 
 const API_URI = "https://developer.mtd.org/api/v2.2/json";
 const CUMTD_API_KEY = process.env.CUMTD_API_KEY;
 const MAX_EXPECTED_MINS_AWAY = 60;
-
 // add the HTTP Keep-Alive header to speed up proxy requests
 const opts = {
   agent: new https.Agent({
@@ -18,11 +18,12 @@ const opts = {
 
 // create express app on port 3000
 const app = express();
-app.use(morgan('dev'));
+app.use(morgan("dev"));
+app.use(helmet());
 const port = process.env.PORT;
-const host = process.env.NODE_ENV === 'production' ? process.env.REDIS_ALIAS : '127.0.0.1';
+const host = process.env.NODE_ENV === "production" ? process.env.REDIS_URL : "";
 
-var client = redis.createClient({host});
+var client = redis.createClient(host);
 bluebird.promisifyAll(redis);
 
 app.get("/api/getdeparturesbystop", async (req, res) => {

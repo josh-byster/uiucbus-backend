@@ -16,6 +16,7 @@ app:
   environment:
     - NODE_ENV=production
     - PORT=3000
-    - REDIS_ALIAS=redis-store
+    - REDIS_URL=redis://redis-store:6379
+    - CUMTD_API_KEY=$CUMTD_API_KEY
   command:
     sh -c 'npm i && node server.js'
