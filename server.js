@@ -26,6 +26,12 @@ const host = process.env.NODE_ENV === "production" ? process.env.REDIS_URL : "";
 var client = redis.createClient(host);
 bluebird.promisifyAll(redis);
 
+app.all("/*", function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  next();
+});
+
 app.get("/api/getdeparturesbystop", async (req, res) => {
   const { stop_id } = req.query;
   if (!stop_id) {

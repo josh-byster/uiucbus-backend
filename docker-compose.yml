@@ -6,9 +6,10 @@ redis:
     - 6379
 
 app:
-  build: ./
+  build: .
   volumes:
-    - ./:/var/www/app
+    - .:/var/www/app
+    - fe_modules:/var/www/app/node_modules
   ports:
     - 3000:3000
   links:
@@ -19,4 +20,4 @@ app:
     - REDIS_URL=redis://redis-store:6379
     - CUMTD_API_KEY=$CUMTD_API_KEY
   command:
-    sh -c 'npm i && node server.js'
+    sh -c 'npm run start:dev'
