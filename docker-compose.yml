@@ -9,6 +9,10 @@ app:
   build: .
   volumes:
     - .:/var/www/app
+    # expose a named volume that works because installing
+    # and then mounting will hide that folder, so we need to explicitly
+    # show it again
+    # note that when reinstalling modules, we need to remove this volume
     - fe_modules:/var/www/app/node_modules
   ports:
     - 3000:3000
