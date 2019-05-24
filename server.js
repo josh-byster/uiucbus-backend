@@ -21,7 +21,7 @@ const app = express();
 app.use(morgan("dev"));
 app.use(helmet());
 const port = process.env.PORT;
-const host = process.env.NODE_ENV === "production" ? process.env.REDIS_URL : "";
+const host = process.env.REDIS_URL ? process.env.REDIS_URL : "";
 
 var client = redis.createClient(host);
 bluebird.promisifyAll(redis);
@@ -43,17 +43,33 @@ app.get("/api/getdeparturesbystop", async (req, res) => {
   if (stringifiedCurrentEntry) {
     // cache hit!
     const JSONCurrentEntry = JSON.parse(stringifiedCurrentEntry);
-    if (new Date() - new Date(JSONCurrentEntry.time) > 60 * 1000) {
-      // outdated, replace!
-      resp = await updateCache(stop_id);
-      resp.from_cache = false;
-    } else {
-      resp = JSONCurrentEntry;
-      resp.from_cache = true;
-    }
+    resp = JSONCurrentEntry;
+    resp.from_cache = true;
   } else {
     // missing from the cache store, add new entry
-    resp = await updateCache(stop_id);
+    resp = await updateGetDeparturesCache(stop_id);
+    resp.from_cache = false;
+  }
+  res.send(resp);
+});
+
+app.get("/api/getstop", async (req, res) => {
+  const { stop_id } = req.query;
+  const key = `${stop_id}.stop`;
+  if (!stop_id) {
+    return res.send("invalid");
+  }
+  let stringifiedCurrentEntry = await client.getAsync(key);
+  let resp;
+
+  if (stringifiedCurrentEntry) {
+    // cache hit!
+    const JSONCurrentEntry = JSON.parse(stringifiedCurrentEntry);
+    resp = JSONCurrentEntry;
+    resp.from_cache = true;
+  } else {
+    // missing from the cache store, add new entry
+    resp = await updateGetStopCache(stop_id);
     resp.from_cache = false;
   }
   res.send(resp);
@@ -73,14 +89,26 @@ app.get("/api/*", async (req, res) => {
   res.send(json);
 });
 
-const updateCache = async stop_id => {
+const updateGetDeparturesCache = async stop_id => {
   // get latest info
   let json = await fetch(
     `${API_URI}/getdeparturesbystop?key=${CUMTD_API_KEY}&stop_id=${stop_id}&pt=${MAX_EXPECTED_MINS_AWAY}`,
     opts
   ).then(res => res.json());
 
-  await client.setAsync(stop_id, JSON.stringify(json));
+  await client.setAsync(stop_id, JSON.stringify(json), "EX", 30);
+  return json;
+};
+
+const updateGetStopCache = async stop_id => {
+  // get latest info
+  let json = await fetch(
+    `${API_URI}/getstop?key=${CUMTD_API_KEY}&stop_id=${stop_id}`,
+    opts
+  ).then(res => res.json());
+
+  // refresh every 24 hours
+  await client.setAsync(`${stop_id}.stop`, JSON.stringify(json), "EX", 60 * 60 * 24);
   return json;
 };
 
