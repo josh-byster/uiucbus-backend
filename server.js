@@ -1,5 +1,5 @@
 const express = require("express");
-const fetch = require("node-fetch");
+const axios = require("axios");
 const https = require("https");
 const redis = require("redis");
 const bluebird = require("bluebird");
@@ -13,7 +13,8 @@ const MAX_EXPECTED_MINS_AWAY = 60;
 const opts = {
   agent: new https.Agent({
     keepAlive: true
-  })
+  }),
+  timeout: 5000
 };
 
 // create express app on port 3000
@@ -47,8 +48,13 @@ app.get("/api/getdeparturesbystop", async (req, res) => {
     resp.from_cache = true;
   } else {
     // missing from the cache store, add new entry
-    resp = await updateGetDeparturesCache(stop_id);
-    resp.from_cache = false;
+    try {
+      resp = await updateGetDeparturesCache(stop_id);
+      resp.from_cache = false;
+    } catch (e) {
+      console.error(e);
+      resp = {};
+    }
   }
   res.send(resp);
 });
@@ -69,8 +75,13 @@ app.get("/api/getstop", async (req, res) => {
     resp.from_cache = true;
   } else {
     // missing from the cache store, add new entry
-    resp = await updateGetStopCache(stop_id);
-    resp.from_cache = false;
+    try {
+      resp = await updateGetStopCache(stop_id);
+      resp.from_cache = false;
+    } catch (e) {
+      console.error(e);
+      resp = {};
+    }
   }
   res.send(resp);
 });
@@ -85,13 +96,18 @@ app.get("/api/*", async (req, res) => {
       apiReqUrl += `&${key}=${req.query[key]}`;
     }
   }
-  const json = await fetch(apiReqUrl, opts).then(res => res.json());
-  res.send(json);
+  try {
+    const json = await axios.get(apiReqUrl, opts).then(res => res.json());
+    res.send(json);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("error");
+  }
 });
 
 const updateGetDeparturesCache = async stop_id => {
   // get latest info
-  let json = await fetch(
+  let json = await axios.get(
     `${API_URI}/getdeparturesbystop?key=${CUMTD_API_KEY}&stop_id=${stop_id}&pt=${MAX_EXPECTED_MINS_AWAY}`,
     opts
   ).then(res => res.json());
@@ -102,13 +118,18 @@ const updateGetDeparturesCache = async stop_id => {
 
 const updateGetStopCache = async stop_id => {
   // get latest info
-  let json = await fetch(
+  let json = await axios.get(
     `${API_URI}/getstop?key=${CUMTD_API_KEY}&stop_id=${stop_id}`,
     opts
   ).then(res => res.json());
 
   // refresh every 24 hours
-  await client.setAsync(`${stop_id}.stop`, JSON.stringify(json), "EX", 60 * 60 * 24);
+  await client.setAsync(
+    `${stop_id}.stop`,
+    JSON.stringify(json),
+    "EX",
+    60 * 60 * 24
+  );
   return json;
 };
 
