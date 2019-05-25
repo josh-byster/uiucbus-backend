@@ -133,4 +133,7 @@ const updateGetStopCache = async stop_id => {
   return json;
 };
 
-app.listen(port, () => console.log(`Express app listening on port ${port}!`));
+if(process.env.NODE_ENV !== "test"){
+  app.listen(port, () => console.log(`Express app listening on port ${port}!`));
+}
+module.exports = {app, client};
