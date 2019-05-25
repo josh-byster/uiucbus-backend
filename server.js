@@ -97,7 +97,7 @@ app.get("/api/*", async (req, res) => {
     }
   }
   try {
-    const json = await axios.get(apiReqUrl, opts).then(res => res.json());
+    const json = (await axios.get(apiReqUrl, opts)).data;
     res.send(json);
   } catch (e) {
     console.error(e);
@@ -107,10 +107,10 @@ app.get("/api/*", async (req, res) => {
 
 const updateGetDeparturesCache = async stop_id => {
   // get latest info
-  let json = await axios.get(
+  let json = (await axios.get(
     `${API_URI}/getdeparturesbystop?key=${CUMTD_API_KEY}&stop_id=${stop_id}&pt=${MAX_EXPECTED_MINS_AWAY}`,
     opts
-  ).then(res => res.json());
+  )).data;
 
   await client.setAsync(stop_id, JSON.stringify(json), "EX", 30);
   return json;
@@ -118,10 +118,10 @@ const updateGetDeparturesCache = async stop_id => {
 
 const updateGetStopCache = async stop_id => {
   // get latest info
-  let json = await axios.get(
+  let json = (await axios.get(
     `${API_URI}/getstop?key=${CUMTD_API_KEY}&stop_id=${stop_id}`,
     opts
-  ).then(res => res.json());
+  )).data;
 
   // refresh every 24 hours
   await client.setAsync(
