@@ -36,7 +36,7 @@ app.all("/*", function(req, res, next) {
 app.get("/api/getdeparturesbystop", async (req, res) => {
   const { stop_id } = req.query;
   if (!stop_id) {
-    return res.send("invalid");
+    return res.status(400).send("invalid");
   }
   let stringifiedCurrentEntry = await client.getAsync(stop_id);
   let resp;
@@ -63,7 +63,7 @@ app.get("/api/getstop", async (req, res) => {
   const { stop_id } = req.query;
   const key = `${stop_id}.stop`;
   if (!stop_id) {
-    return res.send("invalid");
+    return res.status(400).send("invalid");
   }
   let stringifiedCurrentEntry = await client.getAsync(key);
   let resp;
