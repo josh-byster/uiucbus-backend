@@ -1,5 +1,6 @@
+sudo: required
+language: node_js
 services:
   - docker
-
-script:
+before_install:
   - docker-compose run app npm test
