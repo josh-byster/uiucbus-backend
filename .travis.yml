@@ -1,6 +1,8 @@
 sudo: required
-language: node_js
 services:
   - docker
 before_install:
+  - docker-compose build --no-cache
+
+script:
   - docker-compose run app npm test
