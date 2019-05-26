@@ -6,3 +6,6 @@ before_install:
 
 script:
   - docker-compose run app npm test
+
+after_success:
+  - sh deploy_heroku.sh
