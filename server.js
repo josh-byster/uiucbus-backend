@@ -53,9 +53,10 @@ app.get("/api/getdeparturesbystop", async (req, res) => {
       resp.from_cache = false;
     } catch (e) {
       console.error(e);
-      resp = {};
+      return res.status(408).send({status: 408, departures: []});
     }
   }
+
   res.send(resp);
 });
 
@@ -80,7 +81,7 @@ app.get("/api/getstop", async (req, res) => {
       resp.from_cache = false;
     } catch (e) {
       console.error(e);
-      resp = {};
+      return res.status(408).send({status: 408, stops: []});
     }
   }
   res.send(resp);
