@@ -1,11 +1,13 @@
 sudo: required
 services:
   - docker
+
 before_install:
   - docker-compose build --no-cache
 
 script:
   - docker-compose run app npm test
 
-after_success:
-  - sh deploy_heroku.sh
+deploy:
+  provider: script
+  script: sh deploy_heroku.sh
